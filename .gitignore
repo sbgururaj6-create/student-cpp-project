@@ -1,0 +1,10 @@
+# build output
+output/*.exe
+*.exe
+*.o
+
+# big generated data - GitHub rejects files over 100 MB
+students_*.txt
+*_passed.txt
+*_failed.txt
+results.txt

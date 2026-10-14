@@ -1,110 +1,69 @@
 #include "Student.h"
 
-// Default constructor. All the input logic now lives in operator>>,
-// so this is deliberately left empty.
-Student::Student() {
-}
+namespace {
+    const int MIN_SCORE = 0;
+    const int MAX_SCORE = 10;
 
-Student::Student(std::string N, std::string SN, std::vector<int> SP, int E) {
-    name = N;
-    surname = SN;
-    SemPoints = SP;
-    exam = E;
-}
-
-Student::Student(const Student &B) {
-    name = B.name;
-    surname = B.surname;
-    SemPoints = B.SemPoints;
-    exam = B.exam;
-}
-
-// Copy-assignment: runs when you write `A = B;` on two Students that already exist
-// (the copy constructor above only runs when a NEW Student is being created).
-Student& Student::operator=(const Student &A) {
-    if (this == &A) return *this;   // guard against self-assignment, e.g. `A = A;`
-    name = A.name;
-    surname = A.surname;
-    SemPoints = A.SemPoints;
-    exam = A.exam;
-    return *this;
-}
-
-Student::~Student() {
-    name.clear();
-    surname.clear();
-    SemPoints.clear();
-    exam = 0;
-}
-
-void Student::print() {
-    cout << "|" << setw(10) << name << "|" << surname << "|"
-         << exam << "|   |" << rezults() << "\n";
-}
-
-void Student::clear() {
-    name.clear();
-    surname.clear();
-    SemPoints.clear();
-    exam = 0;
-}
-
-double Student::rezults() {
-    if (SemPoints.empty()) return exam * 0.6;   // avoid dividing by zero
-    return 0.4 * accumulate(SemPoints.begin(), SemPoints.end(), 0.0) / SemPoints.size()
-           + exam * 0.6;
-}
-
-// Lets you write: cout << someStudent;
-std::ostream& operator<<(std::ostream& out, Student& A) {
-    out << "|" << setw(10) << A.name << "|" << A.surname << "|"
-        << A.exam << "|   |" << A.rezults() << "\n";
-    return out;
-}
-
-// Lets you write: cin >> someStudent;
-std::istream& operator>>(std::istream& in, Student& A) {
-    in >> A.name >> A.surname;
-
-    int n;
-    cout << "Input semester points (enter a non-number, e.g. x, to stop): ";
-    while (cin >> n) {
-        A.SemPoints.push_back(n);
+    void checkScore(int score) {
+        if (score < MIN_SCORE || score > MAX_SCORE)
+            throw std::out_of_range("score " + std::to_string(score) + " is outside " +
+                                    std::to_string(MIN_SCORE) + "-" + std::to_string(MAX_SCORE));
     }
-    // cin >> n fails once you type something that isn't a number — that sets the
-    // stream's fail flag and leaves the bad input sitting in the buffer. We MUST
-    // clear the flag and throw that leftover text away before reading anything
-    // else, or every read after this point will silently fail too.
-    cin.clear();
-    cin.ignore(100, '\n');
-
-    cout << "Input final exam point: ";
-    in >> A.exam;
-    cin.clear();
-    cin.ignore(100, '\n');
-    return in;
 }
 
-
-
-string Student::Name(){
-
-return name;
+Student::Student(string N, string SN, vector<int> SP, int E)
+    : name(std::move(N)), surname(std::move(SN)), SemPoints(std::move(SP)), exam(E) {
+    calculate();
 }
 
-
-bool lessStud(Student A, Student B) {
-    return A.Name() < B.Name();
+// Random-score constructor: invents numHW homework scores and an exam score.
+Student::Student(string N, string SN, int numHW)
+    : name(std::move(N)), surname(std::move(SN)) {
+    for (int i = 0; i < numHW; i++) {
+        SemPoints.push_back(rand() % 10 + 1);
+    }
+    exam = rand() % 10 + 1;
+    calculate();
 }
 
-bool MoreStud(Student A, Student B) {
-    return A.Name() > B.Name();
+void Student::calculate() {
+    if (SemPoints.empty())
+        throw std::invalid_argument("student " + name + " " + surname + " has no homework scores");
+
+    for (int p : SemPoints) checkScore(p);
+    checkScore(exam);
+
+    // 40% homework + 60% exam. Homework part = AVERAGE ...
+    finalAvg = 0.4 * accumulate(SemPoints.begin(), SemPoints.end(), 0.0) / static_cast<double>(SemPoints.size())
+               + 0.6 * exam;
+
+    // ... or the MEDIAN (middle value) of the homework scores.
+    vector<int> sorted = SemPoints;
+    std::sort(sorted.begin(), sorted.end());
+    size_t n = sorted.size();
+    double med;
+    if (n % 2 == 0)
+        med = (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0;   // even count: average the two middle values
+    else
+        med = sorted[n / 2];                               // odd count: the single middle value
+    finalMed = 0.4 * med + 0.6 * exam;
 }
 
-bool lessAver(Student A, Student B) {
-    return A.rezults() < B.rezults();
+void Student::print() const {
+    cout << name << "|" << surname << "|";
+    for (int a : SemPoints) cout << a << "|";
+    cout << exam << "|   |" << finalAvg << "\n";
 }
 
-bool MoreAver(Student A, Student B) {
-    return A.rezults() > B.rezults();
+void Student::writeRecord(ostream &out) const {
+    out << name << ' ' << surname;
+    for (int a : SemPoints) out << ' ' << a;
+    out << ' ' << exam << '\n';
 }
+
+bool lessStud(const Student &A, const Student &B) { return A.Name() < B.Name(); }
+bool MoreStud(const Student &A, const Student &B) { return A.Name() > B.Name(); }
+bool lessAver(const Student &A, const Student &B) { return A.rezults() < B.rezults(); }
+bool MoreAver(const Student &A, const Student &B) { return A.rezults() > B.rezults(); }
+bool lessMed(const Student &A, const Student &B)  { return A.median() < B.median(); }
+bool MoreMed(const Student &A, const Student &B)  { return A.median() > B.median(); }
