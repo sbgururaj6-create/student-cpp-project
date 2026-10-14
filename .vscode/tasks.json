@@ -6,11 +6,15 @@
             "type": "shell",
             "command": "C:/msys64/ucrt64/bin/g++.exe",
             "args": [
+                "-std=c++17",
+                "-O2",
                 "-Wall",
                 "-Wextra",
-                "-g3",
                 "${workspaceFolder}/main.cpp",
                 "${workspaceFolder}/Student.cpp",
+                "${workspaceFolder}/StudentIO.cpp",
+                "${workspaceFolder}/StudentUtils.cpp",
+                "${workspaceFolder}/Processing.cpp",
                 "-o",
                 "${workspaceFolder}/output/main.exe"
             ],
