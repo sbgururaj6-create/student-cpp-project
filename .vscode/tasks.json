@@ -13,7 +13,6 @@
                 "${workspaceFolder}/main.cpp",
                 "${workspaceFolder}/Student.cpp",
                 "${workspaceFolder}/StudentIO.cpp",
-                "${workspaceFolder}/StudentUtils.cpp",
                 "${workspaceFolder}/Processing.cpp",
                 "-o",
                 "${workspaceFolder}/output/main.exe"

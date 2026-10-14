@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/User/Downloads/student",
-      "program": "c:/Users/User/Downloads/student/build/Debug/outDebug",
+      "cwd": "c:/Users/gurur/Downloads/files/student-cpp-project-0.25/student-cpp-project-0.25",
+      "program": "c:/Users/gurur/Downloads/files/student-cpp-project-0.25/student-cpp-project-0.25/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
