@@ -4,11 +4,15 @@ namespace {
     const int MIN_SCORE = 0;
     const int MAX_SCORE = 10;
 
+    bool outsideRange(int score) { return score < MIN_SCORE || score > MAX_SCORE; }
+
     void checkScore(int score) {
-        if (score < MIN_SCORE || score > MAX_SCORE)
+        if (outsideRange(score))
             throw std::out_of_range("score " + std::to_string(score) + " is outside " +
                                     std::to_string(MIN_SCORE) + "-" + std::to_string(MAX_SCORE));
     }
+
+    int randomScore() { return rand() % 10 + 1; }
 }
 
 Student::Student(string N, string SN, vector<int> SP, int E)
@@ -17,12 +21,11 @@ Student::Student(string N, string SN, vector<int> SP, int E)
 }
 
 // Random-score constructor: invents numHW homework scores and an exam score.
+// v1.0: std::generate_n calls randomScore() numHW times and adds each result to SemPoints.
 Student::Student(string N, string SN, int numHW)
     : name(std::move(N)), surname(std::move(SN)) {
-    for (int i = 0; i < numHW; i++) {
-        SemPoints.push_back(rand() % 10 + 1);
-    }
-    exam = rand() % 10 + 1;
+    std::generate_n(std::back_inserter(SemPoints), numHW, randomScore);
+    exam = randomScore();
     calculate();
 }
 
@@ -30,7 +33,9 @@ void Student::calculate() {
     if (SemPoints.empty())
         throw std::invalid_argument("student " + name + " " + surname + " has no homework scores");
 
-    for (int p : SemPoints) checkScore(p);
+    // v1.0: std::find_if returns the FIRST score outside 0-10, or end() if every score is fine.
+    auto bad = std::find_if(SemPoints.begin(), SemPoints.end(), outsideRange);
+    if (bad != SemPoints.end()) checkScore(*bad);    // throws, naming the bad score
     checkScore(exam);
 
     // 40% homework + 60% exam. Homework part = AVERAGE ...
@@ -49,16 +54,11 @@ void Student::calculate() {
     finalMed = 0.4 * med + 0.6 * exam;
 }
 
-void Student::print() const {
-    cout << name << "|" << surname << "|";
-    for (int a : SemPoints) cout << a << "|";
-    cout << exam << "|   |" << finalAvg << "\n";
-}
-
+// v1.0: std::copy sends every homework score to the file, each one followed by a space.
 void Student::writeRecord(ostream &out) const {
-    out << name << ' ' << surname;
-    for (int a : SemPoints) out << ' ' << a;
-    out << ' ' << exam << '\n';
+    out << name << ' ' << surname << ' ';
+    std::copy(SemPoints.begin(), SemPoints.end(), std::ostream_iterator<int>(out, " "));
+    out << exam << '\n';
 }
 
 bool lessStud(const Student &A, const Student &B) { return A.Name() < B.Name(); }

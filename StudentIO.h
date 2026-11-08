@@ -6,7 +6,7 @@
 // Throws std::runtime_error if the file cannot be created.
 void generateStudentFile(const string &filename, size_t count, int numHW);
 
-// ---- v0.25: the functions below are TEMPLATES, so the very same code works with
+// ---- The functions below are TEMPLATES, so the very same code works with
 // ---- std::vector<Student>, std::list<Student> and std::deque<Student>.
 // ---- (Template code must live in the header, that is why it is here.)
 
@@ -33,9 +33,11 @@ Container readStudents(const string &filename) {
         string name, surname;
         if (!(iss >> name >> surname)) continue;    // blank line
 
+        // v1.0: std::copy reads every number on the line into 'numbers'.
+        // It stops at the end of the line, or at the first thing that is not a number.
         vector<int> numbers;
-        int x;
-        while (iss >> x) numbers.push_back(x);
+        std::copy(std::istream_iterator<int>(iss), std::istream_iterator<int>(),
+                  std::back_inserter(numbers));
 
         string where = "line " + std::to_string(lineNo) + ": ";
         if (!iss.eof())                             // stopped on something that is not a number
