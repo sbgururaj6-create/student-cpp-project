@@ -1,10 +1,24 @@
-# build output
-output/*.exe
-*.exe
-*.o
+# Only source files go to GitHub. Everything below is made on your own computer.
 
-# big generated data - GitHub rejects files over 100 MB
+# Build results (Makefile, CMake, VS Code)
+build/
+output/
+*.o
+*.d
+*.exe
+main
+
+# Data and results the program generates (GitHub refuses files over 100 MB)
 students_*.txt
 *_passed.txt
 *_failed.txt
+strategy_test_*.md
+algorithm_test_*.md
 results.txt
+
+# Editor and IDE settings
+.vscode/
+.idea/
+.vs/
+*.user
+.DS_Store
