@@ -6,8 +6,10 @@
 #include <list>
 #include <deque>
 #include <iomanip>
-#include <numeric>
-#include <algorithm>
+#include <numeric>      // std::accumulate
+#include <algorithm>    // std::sort, std::find_if, std::copy, std::copy_if, std::remove_copy_if,
+                        // std::remove_if, std::stable_partition, std::generate_n
+#include <iterator>     // std::back_inserter, std::make_move_iterator, stream iterators
 #include <fstream>      // reading / writing files
 #include <sstream>      // splitting each line into numbers
 #include <cstdlib>      // rand()

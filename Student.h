@@ -14,13 +14,13 @@ public:
     Student(string N, string SN, vector<int> SP, int E);
     Student(string N, string SN, int numHW);   // random scores (1-10)
 
-    void print() const;
     void writeRecord(ostream &out) const;      // one line: name surname hw... exam
 
     double rezults() const { return finalAvg; }   // final grade, AVERAGE of homework
     double median() const { return finalMed; }    // final grade, MEDIAN of homework
     const string &Name() const { return name; }
     const string &Surname() const { return surname; }
+    size_t homeworkCount() const { return SemPoints.size(); }   // used for the memory estimate
 };
 
 bool lessStud(const Student &A, const Student &B);   // name A-Z
