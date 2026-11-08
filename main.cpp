@@ -1,16 +1,8 @@
 #include "lib.h"
 #include "Processing.h"
 
-// The five test file sizes required by the task.
-const vector<size_t> FILE_SIZES = {1000, 10000, 100000, 1000000, 10000000};
-
-// Container 1 and 2 are the ones the task asks for; vector is kept as a baseline
-// so v0.2 and v0.25 results can be compared in the same table.
+// Container 1 and 2 are the ones task 2 asked for; vector is the third one to compare.
 const vector<string> CONTAINER_NAMES = {"list", "deque", "vector"};
-
-string testFileName(size_t records) {
-    return "students_" + std::to_string(records) + ".txt";
-}
 
 // Asks until the person types a whole number between lo and hi.
 // (std::stoi throws an exception on text like "abc" - we catch it and ask again.)
@@ -46,16 +38,26 @@ int askContainer() {
     cout << "\nWhich container?\n"
          << "1) std::list\n"
          << "2) std::deque\n"
-         << "3) std::vector (for comparison)\n";
+         << "3) std::vector\n";
     return askInt("Choice: ", 1, 3);
 }
 
+Split askSplit() {
+    cout << "\nHow to split the students into passed and failed?\n"
+         << "1) Strategy 1, for loop: copy everyone into two new containers\n"
+         << "2) Strategy 2, for loop: move the failed out, erase them one by one\n"
+         << "3) Strategy 1, <algorithm>: remove_copy_if + copy_if\n"
+         << "4) Strategy 2, <algorithm>: stable_partition + copy + erase\n"
+         << "5) Strategy 2, <algorithm>: copy_if + remove_if + erase\n";
+    return static_cast<Split>(askInt("Choice: ", 1, 5));
+}
+
 // Picks the right container type for the number the person chose.
-Timings processWith(int container, const string &filename, int sortChoice) {
+Timings processWith(int container, const string &filename, int sortChoice, Split method) {
     switch (container) {
-        case 1:  return processFile<list<Student>>(filename, sortChoice);
-        case 2:  return processFile<deque<Student>>(filename, sortChoice);
-        default: return processFile<vector<Student>>(filename, sortChoice);
+        case 1:  return processFile<list<Student>>(filename, sortChoice, method);
+        case 2:  return processFile<deque<Student>>(filename, sortChoice, method);
+        default: return processFile<vector<Student>>(filename, sortChoice, method);
     }
 }
 
@@ -74,65 +76,48 @@ void processOne() {
     string filename;
     std::getline(cin, filename);
     int container = askContainer();
-    
+    Split method = askSplit();
     int sortChoice = askSortChoice();
 
-    Timings t = processWith(container, filename, sortChoice);
+    Timings t = processWith(container, filename, sortChoice, method);
     const string cname = CONTAINER_NAMES[static_cast<size_t>(container - 1)];
-    printTimings(filename + " [" + cname + "]", t);
+    printTimings(filename + " [" + cname + ", " + splitName(method) + "]", t);
 
     string base = std::filesystem::path(filename).stem().string() + "_" + cname;
     cout << "\nSaved " << base << "_passed.txt and " << base << "_failed.txt\n";
 }
 
-void speedTest() {
+void runStrategyTest() {
     int howMany = askInt("Test how many files, smallest first (1-5)? ", 1, 5);
     int sortChoice = askSortChoice();
+    strategyTest(static_cast<size_t>(howMany), sortChoice);
+}
 
-    struct Row { size_t records; string container; Timings t; };
-    vector<Row> rows;
-
-    for (size_t i = 0; i < static_cast<size_t>(howMany); i++) {
-        string filename = testFileName(FILE_SIZES[i]);
-        for (int c = 1; c <= 3; c++) {
-            const string cname = CONTAINER_NAMES[static_cast<size_t>(c - 1)];
-            cout << "Working on " << filename << " with " << cname << " ...\n";
-            try {
-                rows.push_back({FILE_SIZES[i], cname, processWith(c, filename, sortChoice)});
-            } catch (const std::bad_alloc &) {
-                cout << "  skipped: out of memory\n";
-            } catch (const std::exception &e) {
-                cout << "  skipped: " << e.what() << "\n";   // e.g. file not generated yet
-            }
-        }
-    }
-
-    cout << "\nSpeed test, seconds\n";
-    cout << right << setw(10) << "Records" << setw(9) << "Type" << setw(10) << "Read" << setw(10) << "Sort"
-         << setw(10) << "Split" << setw(10) << "Write" << setw(10) << "TOTAL" << "\n";
-    cout << string(69, '-') << "\n" << std::fixed << std::setprecision(4);
-    for (const Row &r : rows) {
-        cout << setw(10) << r.records << setw(9) << r.container << setw(10) << r.t.read << setw(10) << r.t.sort
-             << setw(10) << r.t.split << setw(10) << r.t.write << setw(10) << r.t.total << "\n";
-    }
+void runAlgorithmTest() {
+    int howMany = askInt("Test how many files, smallest first (1-5)? ", 1, 5);
+    int container = askContainer();
+    int sortChoice = askSortChoice();
+    algorithmTest(static_cast<size_t>(howMany), sortChoice, container);
 }
 
 int main() {
     srand((unsigned)time(0));   // seed rand() once, so numbers differ each run
 
     while (true) {
-        cout << "\n=== Students (v0.25, std::list and std::deque) ===\n"
+        cout << "\n=== Students (v1.0) ===\n"
              << "1) Generate the 5 test files (1 000 ... 10 000 000 students)\n"
              << "2) Process ONE file: read, sort, split, write, with timing\n"
-             << "3) Speed test on the test files (list, deque, vector)\n"
+             << "3) Strategy test: strategy 1 and 2 in list, deque and vector\n"
+             << "4) Algorithm test: for loops vs <algorithm> in one container\n"
              << "0) Quit\n";
 
         try {
-            int choice = askInt("Choice: ", 0, 3);
+            int choice = askInt("Choice: ", 0, 4);
             if (choice == 0) break;
             if (choice == 1) generateFiles();
             else if (choice == 2) processOne();
-            else speedTest();
+            else if (choice == 3) runStrategyTest();
+            else runAlgorithmTest();
         } catch (const std::bad_alloc &) {
             cout << "Error: the computer ran out of memory. Try a smaller file.\n";
         } catch (const std::exception &e) {
